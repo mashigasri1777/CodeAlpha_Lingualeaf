@@ -17,10 +17,8 @@ def home():
 
 @app.route("/translate", methods=["POST"])
 def translate_text():
-    if not SUBSCRIPTION_KEY or not REGION or not ENDPOINT:
-        return jsonify({
-            "error": "Server configuration error: missing Translator environment variables."
-        }), 500
+    if not SUBSCRIPTION_KEY or not REGION:
+        return jsonify({"error": "Missing Translator API key or region in environment variables."}), 500
 
     data = request.get_json()
     text = data.get("text", "").strip()
@@ -47,10 +45,14 @@ def translate_text():
 
     try:
         response = requests.post(url, headers=headers, json=body, timeout=20)
-        error_text = response.text
-        response.raise_for_status()
-        result = response.json()
+        raw_text = response.text
 
+        if response.status_code != 200:
+            return jsonify({
+                "error": f"Azure error {response.status_code}: {raw_text}"
+            }), response.status_code
+
+        result = response.json()
         translated_text = result[0]["translations"][0]["text"]
         detected_language = result[0].get("detectedLanguage", {}).get("language", "auto")
 
@@ -59,14 +61,8 @@ def translate_text():
             "detected_language": detected_language
         })
 
-    except requests.exceptions.HTTPError:
-        return jsonify({
-            "error": f"Translator API error: {error_text}"
-        }), response.status_code
     except requests.exceptions.RequestException as e:
-        return jsonify({
-            "error": f"Request failed: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Request failed: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
