@@ -66,3 +66,10 @@ def translate_text():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    @app.route("/check-env")
+def check_env():
+    return {
+        "has_key": bool(os.getenv("TRANSLATOR_TEXT_SUBSCRIPTION_KEY")),
+        "has_region": bool(os.getenv("TRANSLATOR_TEXT_REGION")),
+        "has_endpoint": bool(os.getenv("TRANSLATOR_TEXT_ENDPOINT"))
+    }
