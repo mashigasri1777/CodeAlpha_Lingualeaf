@@ -17,8 +17,12 @@ def home():
 
 @app.route("/translate", methods=["POST"])
 def translate_text():
-    data = request.get_json()
+    if not SUBSCRIPTION_KEY or not REGION or not ENDPOINT:
+        return jsonify({
+            "error": "Server configuration error: missing Translator environment variables."
+        }), 500
 
+    data = request.get_json()
     text = data.get("text", "").strip()
     source_lang = data.get("source_lang", "")
     target_lang = data.get("target_lang", "")
@@ -29,13 +33,9 @@ def translate_text():
     if not target_lang:
         return jsonify({"error": "Please select a target language."}), 400
 
-    path = "/translate?api-version=3.0"
-    params = f"&to={target_lang}"
-
+    url = f"{ENDPOINT}/translate?api-version=3.0&to={target_lang}"
     if source_lang and source_lang != "auto":
-        params += f"&from={source_lang}"
-
-    url = ENDPOINT + path + params
+        url += f"&from={source_lang}"
 
     headers = {
         "Ocp-Apim-Subscription-Key": SUBSCRIPTION_KEY,
@@ -46,7 +46,8 @@ def translate_text():
     body = [{"text": text}]
 
     try:
-        response = requests.post(url, headers=headers, json=body)
+        response = requests.post(url, headers=headers, json=body, timeout=20)
+        error_text = response.text
         response.raise_for_status()
         result = response.json()
 
@@ -58,8 +59,14 @@ def translate_text():
             "detected_language": detected_language
         })
 
+    except requests.exceptions.HTTPError:
+        return jsonify({
+            "error": f"Translator API error: {error_text}"
+        }), response.status_code
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Translation failed: {str(e)}"}), 500
+        return jsonify({
+            "error": f"Request failed: {str(e)}"
+        }), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
