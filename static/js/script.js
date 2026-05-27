@@ -1,73 +1,96 @@
-const sendBtn = document.getElementById("sendBtn");
-const chatBox = document.getElementById("chatBox");
+const inputText = document.getElementById("inputText");
+const outputText = document.getElementById("outputText");
+const sourceLang = document.getElementById("source_lang");
+const targetLang = document.getElementById("target_lang");
+const translateBtn = document.getElementById("translateBtn");
+const copyBtn = document.getElementById("copyBtn");
+const speakBtn = document.getElementById("speakBtn");
+const clearBtn = document.getElementById("clearBtn");
+const swapBtn = document.getElementById("swapBtn");
+const charCount = document.getElementById("charCount");
+const detectedLang = document.getElementById("detectedLang");
+const statusMessage = document.getElementById("statusMessage");
 
-sendBtn.addEventListener("click", async () => {
+inputText.addEventListener("input", () => {
+  charCount.textContent = `${inputText.value.length} characters`;
+});
 
-    const input =
-    document.getElementById("userInput");
+swapBtn.addEventListener("click", () => {
+  if (sourceLang.value === "auto") return;
 
-    const text = input.value;
+  const tempLang = sourceLang.value;
+  sourceLang.value = targetLang.value;
+  targetLang.value = tempLang;
 
-    if(text.trim() === "") return;
+  const tempText = inputText.value;
+  inputText.value = outputText.value;
+  outputText.value = tempText;
+});
 
-    addMessage(text, "user");
+translateBtn.addEventListener("click", async () => {
+  const text = inputText.value.trim();
 
-    input.value = "";
+  if (!text) {
+    statusMessage.textContent = "Please enter text to translate.";
+    return;
+  }
 
-    const source =
-    document.getElementById("sourceLang").value;
+  statusMessage.textContent = "Translating...";
 
-    const target =
-    document.getElementById("targetLang").value;
-
+  try {
     const response = await fetch("/translate", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            text,
-            source,
-            target
-        })
-
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: text,
+        source_lang: sourceLang.value,
+        target_lang: targetLang.value
+      })
     });
 
     const data = await response.json();
 
-    addMessage(data.translated, "bot");
+    if (!response.ok) {
+      statusMessage.textContent = data.error || "Something went wrong.";
+      return;
+    }
 
+    outputText.value = data.translated_text;
+    detectedLang.textContent = `Detected: ${data.detected_language}`;
+    statusMessage.textContent = "Translation completed successfully.";
+  } catch (error) {
+    statusMessage.textContent = "Error connecting to server.";
+  }
 });
 
-function addMessage(text, sender){
+copyBtn.addEventListener("click", async () => {
+  if (!outputText.value.trim()) {
+    statusMessage.textContent = "No translated text to copy.";
+    return;
+  }
 
-    const msg = document.createElement("div");
+  await navigator.clipboard.writeText(outputText.value);
+  statusMessage.textContent = "Translated text copied.";
+});
 
-    msg.classList.add("message");
-    msg.classList.add(sender);
+clearBtn.addEventListener("click", () => {
+  inputText.value = "";
+  outputText.value = "";
+  charCount.textContent = "0 characters";
+  detectedLang.textContent = "Detected: -";
+  statusMessage.textContent = "Cleared.";
+});
 
-    msg.innerText = text;
+speakBtn.addEventListener("click", () => {
+  if (!outputText.value.trim()) {
+    statusMessage.textContent = "No translated text to speak.";
+    return;
+  }
 
-    chatBox.appendChild(msg);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-document.getElementById("swapBtn")
-.addEventListener("click", () => {
-
-    let source =
-    document.getElementById("sourceLang");
-
-    let target =
-    document.getElementById("targetLang");
-
-    let temp = source.value;
-
-    source.value = target.value;
-
-    target.value = temp;
+  const utterance = new SpeechSynthesisUtterance(outputText.value);
+  utterance.lang = targetLang.value;
+  speechSynthesis.speak(utterance);
+  statusMessage.textContent = "Speaking translated text.";
 });
