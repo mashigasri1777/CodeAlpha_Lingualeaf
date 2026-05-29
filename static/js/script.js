@@ -1,20 +1,35 @@
-const translateBtn = document.getElementById("translateBtn");
+document.addEventListener("DOMContentLoaded", () => {
 
-translateBtn.addEventListener("click", async () => {
+    const translateBtn =
+    document.getElementById("translateBtn");
 
-    const text =
+    translateBtn.addEventListener("click", translateText);
+
+});
+
+async function translateText() {
+
+    const inputText =
     document.getElementById("inputText").value;
 
-    const source =
+    const sourceLang =
     document.getElementById("sourceLang").value;
 
-    const target =
+    const targetLang =
     document.getElementById("targetLang").value;
 
-    const output =
+    const outputText =
     document.getElementById("outputText");
 
-    output.value = "Translating...";
+    if(inputText.trim() === ""){
+
+        outputText.value =
+        "Please enter text";
+
+        return;
+    }
+
+    outputText.value = "Translating...";
 
     try {
 
@@ -27,63 +42,30 @@ translateBtn.addEventListener("click", async () => {
             },
 
             body: JSON.stringify({
-                text,
-                source,
-                target
+
+                text: inputText,
+                source: sourceLang,
+                target: targetLang
+
             })
 
         });
 
         const data = await response.json();
 
-        output.value = data.translatedText;
+        console.log(data);
+
+        outputText.value =
+        data.translatedText;
 
     }
 
     catch(error){
 
-        output.value = "Translation failed";
+        console.log(error);
+
+        outputText.value =
+        "Translation failed";
 
     }
-
-});
-
-document.getElementById("swapBtn")
-.addEventListener("click", () => {
-
-    let source =
-    document.getElementById("sourceLang");
-
-    let target =
-    document.getElementById("targetLang");
-
-    let temp = source.value;
-
-    source.value = target.value;
-
-    target.value = temp;
-});
-
-document.getElementById("copyBtn")
-.addEventListener("click", () => {
-
-    const text =
-    document.getElementById("outputText").value;
-
-    navigator.clipboard.writeText(text);
-
-    alert("Copied!");
-});
-
-document.getElementById("speakBtn")
-.addEventListener("click", () => {
-
-    const text =
-    document.getElementById("outputText").value;
-
-    const speech =
-    new SpeechSynthesisUtterance(text);
-
-    window.speechSynthesis.speak(speech);
-
-});
+}
