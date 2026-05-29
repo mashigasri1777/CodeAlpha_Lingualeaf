@@ -10,37 +10,42 @@ def home():
 @app.route("/translate", methods=["POST"])
 def translate():
 
-    data = request.get_json()
-
-    text = data.get("text")
-    source = data.get("source")
-    target = data.get("target")
-
-    url = "https://translate.argosopentech.com/translate"
-
-    payload = {
-        "q": text,
-        "source": source,
-        "target": target,
-        "format": "text"
-    }
-
     try:
+
+        data = request.get_json()
+
+        text = data["text"]
+        source = data["source"]
+        target = data["target"]
+
+        url = "https://translate.argosopentech.com/translate"
+
+        payload = {
+            "q": text,
+            "source": source,
+            "target": target,
+            "format": "text"
+        }
 
         response = requests.post(url, json=payload)
 
         result = response.json()
 
-        translated_text = result["translatedText"]
+        translated_text =
+        result["translatedText"]
 
         return jsonify({
-            "translatedText": translated_text
+            "translatedText":
+            translated_text
         })
 
     except Exception as e:
 
+        print("ERROR:", e)
+
         return jsonify({
-            "translatedText": "Translation Error"
+            "translatedText":
+            "Translation error"
         })
 
 if __name__ == "__main__":
