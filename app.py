@@ -8,51 +8,40 @@ def home():
     return render_template("index.html")
 
 @app.route("/translate", methods=["POST"])
-def translate_text():
+def translate():
+
     data = request.get_json()
 
-    text = data.get("text", "").strip()
-    source_lang = data.get("source_lang", "auto")
-    target_lang = data.get("target_lang", "").strip()
+    text = data.get("text")
+    source = data.get("source")
+    target = data.get("target")
 
-    if not text:
-        return jsonify({"error": "Please enter text to translate."}), 400
-
-    if not target_lang:
-        return jsonify({"error": "Please select a target language."}), 400
-
-    url = "https://libretranslate.com/translate"
+    url = "https://translate.argosopentech.com/translate"
 
     payload = {
         "q": text,
-        "source": source_lang if source_lang else "auto",
-        "target": target_lang,
+        "source": source,
+        "target": target,
         "format": "text"
     }
 
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=20)
-        raw_response = response.text
 
-        if response.status_code != 200:
-            return jsonify({
-                "error": f"LibreTranslate error {response.status_code}: {raw_response}"
-            }), response.status_code
+        response = requests.post(url, json=payload)
 
         result = response.json()
 
+        translated_text = result["translatedText"]
+
         return jsonify({
-            "translated_text": result.get("translatedText", ""),
-            "detected_language": source_lang
+            "translatedText": translated_text
         })
 
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Translation failed: {str(e)}"}), 500
+    except Exception as e:
+
+        return jsonify({
+            "translatedText": "Translation Error"
+        })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
