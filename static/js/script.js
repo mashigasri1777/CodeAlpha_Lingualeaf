@@ -1,96 +1,89 @@
-const inputText = document.getElementById("inputText");
-const outputText = document.getElementById("outputText");
-const sourceLang = document.getElementById("source_lang");
-const targetLang = document.getElementById("target_lang");
 const translateBtn = document.getElementById("translateBtn");
-const copyBtn = document.getElementById("copyBtn");
-const speakBtn = document.getElementById("speakBtn");
-const clearBtn = document.getElementById("clearBtn");
-const swapBtn = document.getElementById("swapBtn");
-const charCount = document.getElementById("charCount");
-const detectedLang = document.getElementById("detectedLang");
-const statusMessage = document.getElementById("statusMessage");
-
-inputText.addEventListener("input", () => {
-  charCount.textContent = `${inputText.value.length} characters`;
-});
-
-swapBtn.addEventListener("click", () => {
-  if (sourceLang.value === "auto") return;
-
-  const tempLang = sourceLang.value;
-  sourceLang.value = targetLang.value;
-  targetLang.value = tempLang;
-
-  const tempText = inputText.value;
-  inputText.value = outputText.value;
-  outputText.value = tempText;
-});
 
 translateBtn.addEventListener("click", async () => {
-  const text = inputText.value.trim();
 
-  if (!text) {
-    statusMessage.textContent = "Please enter text to translate.";
-    return;
-  }
+    const text =
+    document.getElementById("inputText").value;
 
-  statusMessage.textContent = "Translating...";
+    const source =
+    document.getElementById("sourceLang").value;
 
-  try {
-    const response = await fetch("/translate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: text,
-        source_lang: sourceLang.value,
-        target_lang: targetLang.value
-      })
-    });
+    const target =
+    document.getElementById("targetLang").value;
 
-    const data = await response.json();
+    const output =
+    document.getElementById("outputText");
 
-    if (!response.ok) {
-      statusMessage.textContent = data.error || "Something went wrong.";
-      return;
+    output.value = "Translating...";
+
+    try {
+
+        const response = await fetch("/translate", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                text,
+                source,
+                target
+            })
+
+        });
+
+        const data = await response.json();
+
+        output.value = data.translatedText;
+
     }
 
-    outputText.value = data.translated_text;
-    detectedLang.textContent = `Detected: ${data.detected_language}`;
-    statusMessage.textContent = "Translation completed successfully.";
-  } catch (error) {
-    statusMessage.textContent = "Error connecting to server.";
-  }
+    catch(error){
+
+        output.value = "Translation failed";
+
+    }
+
 });
 
-copyBtn.addEventListener("click", async () => {
-  if (!outputText.value.trim()) {
-    statusMessage.textContent = "No translated text to copy.";
-    return;
-  }
+document.getElementById("swapBtn")
+.addEventListener("click", () => {
 
-  await navigator.clipboard.writeText(outputText.value);
-  statusMessage.textContent = "Translated text copied.";
+    let source =
+    document.getElementById("sourceLang");
+
+    let target =
+    document.getElementById("targetLang");
+
+    let temp = source.value;
+
+    source.value = target.value;
+
+    target.value = temp;
 });
 
-clearBtn.addEventListener("click", () => {
-  inputText.value = "";
-  outputText.value = "";
-  charCount.textContent = "0 characters";
-  detectedLang.textContent = "Detected: -";
-  statusMessage.textContent = "Cleared.";
+document.getElementById("copyBtn")
+.addEventListener("click", () => {
+
+    const text =
+    document.getElementById("outputText").value;
+
+    navigator.clipboard.writeText(text);
+
+    alert("Copied!");
 });
 
-speakBtn.addEventListener("click", () => {
-  if (!outputText.value.trim()) {
-    statusMessage.textContent = "No translated text to speak.";
-    return;
-  }
+document.getElementById("speakBtn")
+.addEventListener("click", () => {
 
-  const utterance = new SpeechSynthesisUtterance(outputText.value);
-  utterance.lang = targetLang.value;
-  speechSynthesis.speak(utterance);
-  statusMessage.textContent = "Speaking translated text.";
+    const text =
+    document.getElementById("outputText").value;
+
+    const speech =
+    new SpeechSynthesisUtterance(text);
+
+    window.speechSynthesis.speak(speech);
+
 });
